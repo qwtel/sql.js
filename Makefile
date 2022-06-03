@@ -6,9 +6,9 @@
 
 # I got this handy makefile syntax from : https://github.com/mandel59/sqlite-wasm (MIT License) Credited in LICENSE
 # To use another version of Sqlite, visit https://www.sqlite.org/download.html and copy the appropriate values here:
-SQLITE_AMALGAMATION = sqlite-amalgamation-3380000
-SQLITE_AMALGAMATION_ZIP_URL = https://sqlite.org/2022/sqlite-amalgamation-3380000.zip
-SQLITE_AMALGAMATION_ZIP_SHA3 = d167634332b6875d8430f2ad1eda4e0b847b266c4fd7673c91b36644da00d02d
+SQLITE_AMALGAMATION = sqlite-amalgamation-3380500
+SQLITE_AMALGAMATION_ZIP_URL = https://www.sqlite.org/2022/sqlite-amalgamation-3380500.zip
+SQLITE_AMALGAMATION_ZIP_SHA3 = bfad5c42b767520a546251b9876e4a4b127fb651c437b968b149070e09252807
 
 # Note that extension-functions.c hasn't been updated since 2010-02-06, so likely doesn't need to be updated
 EXTENSION_FUNCTIONS = extension-functions.c
@@ -17,13 +17,12 @@ EXTENSION_FUNCTIONS_SHA1 = c68fa706d6d9ff98608044c00212473f9c14892f
 
 EMCC=emcc
 
-CFLAGS = \
-	-O2 \
+SQLITE_COMPILATION_FLAGS = \
+	-Oz \
 	-DSQLITE_OMIT_LOAD_EXTENSION \
 	-DSQLITE_DISABLE_LFS \
 	-DSQLITE_ENABLE_FTS3 \
 	-DSQLITE_ENABLE_FTS3_PARENTHESIS \
-	-DSQLITE_ENABLE_JSON1 \
 	-DSQLITE_ENABLE_RTREE=1 \
 	-DSQLITE_THREADSAFE=0 \
 	-DSQLITE_ENABLE_NORMALIZE
@@ -54,13 +53,11 @@ EMFLAGS_WASM = \
 	-s ALLOW_MEMORY_GROWTH=1
 
 EMFLAGS_OPTIMIZED= \
-	-s INLINING_LIMIT=50 \
-	-O3 \
+	-Oz \
 	-flto \
 	--closure 1
 
 EMFLAGS_DEBUG = \
-	-s INLINING_LIMIT=10 \
 	-s ASSERTIONS=1 \
 	-O1
 
@@ -151,13 +148,13 @@ dist/sql-wasm.js: $(BITCODE_FILES) $(OUTPUT_WRAPPER_FILES) $(SOURCE_API_FILES) $
 out/sqlite3.bc: sqlite-src/$(SQLITE_AMALGAMATION)
 	mkdir -p out
 	# Generate llvm bitcode
-	$(EMCC) $(CFLAGS) -c sqlite-src/$(SQLITE_AMALGAMATION)/sqlite3.c -o $@
+	$(EMCC) $(SQLITE_COMPILATION_FLAGS) -c sqlite-src/$(SQLITE_AMALGAMATION)/sqlite3.c -o $@
 
 # Since the extension-functions.c includes other headers in the sqlite_amalgamation, we declare that this depends on more than just extension-functions.c
 out/extension-functions.bc: sqlite-src/$(SQLITE_AMALGAMATION)
 	mkdir -p out
 	# Generate llvm bitcode
-	$(EMCC) $(CFLAGS) -c sqlite-src/$(SQLITE_AMALGAMATION)/extension-functions.c -o $@
+	$(EMCC) $(SQLITE_COMPILATION_FLAGS) -c sqlite-src/$(SQLITE_AMALGAMATION)/extension-functions.c -o $@
 
 # TODO: This target appears to be unused. If we re-instatate it, we'll need to add more files inside of the JS folder
 # module.tar.gz: test package.json AUTHORS README.md dist/sql-asm.js
